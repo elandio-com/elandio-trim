@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shorter by Elandio.com</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="text-slate-800 antialiased selection:bg-brand-500 selection:text-white bg-slate-50">
+
+    <!-- Auth Modal -->
+    <div id="auth-modal"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 transition-all duration-300">
+        <div class="glass-panel p-8 rounded-2xl shadow-2xl w-full max-w-sm transform transition-all scale-100">
+            <div class="text-center mb-8">
+                <div class="w-12 h-12 bg-brand-600 rounded-xl mx-auto flex items-center justify-center shadow-lg mb-4">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1">
+                        </path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">Admin Access</h2>
+                <p class="text-slate-500 text-sm mt-1">Enter your secure token to continue</p>
+            </div>
+            <div class="space-y-4">
+                <div class="relative">
+                    <input type="password" id="admin-token" placeholder="Enter Admin Token"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-12 py-3 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all" />
+                    <button type="button" id="toggle-password"
+                        class="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="eye-icon">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                            </path>
+                        </svg>
+                        <svg class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            id="eye-off-icon">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+                <button id="login-btn"
+                    class="w-full bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold py-3 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+                    Access Dashboard
+                </button>
+                <p id="auth-error" class="text-red-500 text-sm text-center font-medium hidden">Invalid Token</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="hidden min-h-screen flex flex-row">
+
+        <!-- Mobile Menu Overlay -->
+        <div id="mobile-menu-overlay"
+            class="fixed inset-0 bg-slate-900/50 z-30 hidden lg:hidden backdrop-blur-sm transition-opacity opacity-0">
+        </div>
+
+        <!-- Sidebar -->
+        <aside id="sidebar"
+            class="w-64 bg-white border-r border-slate-200 fixed h-full flex flex-col z-40 transition-transform duration-300 transform -translate-x-full lg:translate-x-0">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white shadow-md">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1">
+                            </path>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="font-bold text-lg tracking-tight text-slate-800 block">Elandio</span>
+                        <span class="text-xs text-slate-400 font-medium">Link Shorter</span>
+                    </div>
+                </div>
+                <!-- Close Button (Mobile) -->
+                <button id="close-sidebar-btn" class="lg:hidden text-slate-400 hover:text-slate-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <nav class="flex-grow p-4 space-y-1 overflow-y-auto">
+                <button onclick="switchTab('overview')" id="nav-overview"
+                    class="w-full flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl bg-brand-50 text-brand-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                        </path>
+                    </svg>
+                    <span>Overview</span>
+                </button>
+                <button onclick="switchTab('settings')" id="nav-settings"
+                    class="w-full flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-600 hover:bg-slate-50 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span>Settings</span>
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-slate-100">
+                <button id="logout-btn"
+                    class="w-full flex items-center justify-center space-x-2 px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                        </path>
+                    </svg>
+                    <span>Sign Out</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-grow lg:ml-64 w-full bg-slate-50/50 min-h-screen transition-all duration-300">
+            <!-- Mobile Header / Hamburger -->
+            <div
+                class="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-20">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1">
+                            </path>
+                        </svg>
+                    </div>
+                    <span class="font-bold text-lg text-slate-800">Elandio</span>
+                </div>
+                <button id="mobile-menu-btn" class="p-2 text-slate-500 hover:bg-slate-50 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+                <!-- Section: Overview (Default) -->
+                <div id="section-overview" class="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+
+                    <header class="flex items-center justify-between mb-8">
+                        <div>
+                            <h1 class="text-3xl font-bold text-slate-900 mb-1">URL Shortener</h1>
+                            <p class="text-slate-500 text-sm">by <a href="https://elandio.com" target="_blank"
+                                    class="text-brand-600 hover:text-brand-700 font-medium">Elandio</a></p>
+                        </div>
+                        <button onclick="document.getElementById('create-card').scrollIntoView({behavior: 'smooth'})"
+                            class="hidden sm:inline-flex bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-brand-500/30 transition-all items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Create Link
+                        </button>
+                    </header>
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div
+                            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group">
+                            <div
+                                class="absolute right-0 top-0 w-32 h-32 bg-brand-50 rounded-full mix-blend-multiply filter blur-2xl opacity-70 -mr-8 -mt-8">
+                            </div>
+                            <div class="relative">
+                                <p class="text-sm font-medium text-slate-500 uppercase tracking-wide">Total Links</p>
+                                <p class="text-3xl font-bold text-slate-900 mt-2" id="stats-total-links">...</p>
+                                <div
+                                    class="mt-4 flex items-center text-sm text-green-600 bg-green-50 w-fit px-2 py-1 rounded-md">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                    </svg>
+                                    <span>Active</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group">
+                            <div
+                                class="absolute right-0 top-0 w-32 h-32 bg-purple-50 rounded-full mix-blend-multiply filter blur-2xl opacity-70 -mr-8 -mt-8">
+                            </div>
+                            <div class="relative">
+                                <p class="text-sm font-medium text-slate-500 uppercase tracking-wide">Total Clicks</p>
+                                <p class="text-3xl font-bold text-slate-900 mt-2" id="stats-total-clicks">...</p>
+                                <div
+                                    class="mt-4 flex items-center text-sm text-brand-600 bg-brand-50 w-fit px-2 py-1 rounded-md">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                                        </path>
+                                    </svg>
+                                    <span>Lifetime</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group">
+                            <div
+                                class="absolute right-0 top-0 w-32 h-32 bg-orange-50 rounded-full mix-blend-multiply filter blur-2xl opacity-70 -mr-8 -mt-8">
+                            </div>
+                            <div class="relative">
+                                <p class="text-sm font-medium text-slate-500 uppercase tracking-wide">Top Performer</p>
+                                <p class="text-lg font-bold text-slate-900 mt-2 truncate" id="stats-top-link">...</p>
+                                <div class="mt-5 text-sm text-slate-400 truncate" id="stats-top-clicks">Waiting for
+                                    data...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Creator Card -->
+                    <div id="create-card" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8">
+                        <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center">
+                            <span
+                                class="w-8 h-8 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4"></path>
+                                </svg>
+                            </span>
+                            Create New Link
+                        </h2>
+                        <form id="create-form" class="space-y-5">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <div class="md:col-span-2">
+                                    <label
+                                        class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 ">Target
+                                        URL</label>
+                                    <input type="url" id="target-url" placeholder="https://very-long-url.com/some/path"
+                                        required
+                                        class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400" />
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Custom
+                                        Slug (Optional)</label>
+                                    <div class="relative">
+                                        <span
+                                            class="absolute left-3 top-3.5 text-slate-400 text-sm font-medium">/</span>
+                                        <input type="text" id="custom-slug" placeholder="my-link"
+                                            class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-7 pr-4 py-3 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-2">
+                                <button type="submit"
+                                    class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 rounded-xl transition-all duration-200 flex items-center justify-center group">
+                                    <span>Shorten URL</span>
+                                    <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </form>
+                        <div id="create-result"
+                            class="mt-6 hidden p-4 bg-green-50 border border-green-100 text-green-700 rounded-xl flex items-center animate-in fade-in slide-in-from-top-2">
+                        </div>
+                        <div id="create-error"
+                            class="mt-6 hidden p-4 bg-red-50 border border-red-100 text-red-700 rounded-xl flex items-center animate-in fade-in slide-in-from-top-2">
+                        </div>
+                    </div>
+
+                    <!-- Links List -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div
+                            class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <h3 class="font-bold text-slate-800">Recent Links</h3>
+                            <div class="flex items-center space-x-3">
+                                <!-- Search Input -->
+                                <div class="relative">
+                                    <svg class="w-4 h-4 absolute left-3 top-3 text-slate-400" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                    <input type="text" id="search-links" placeholder="Search links..."
+                                        class="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all w-64" />
+                                </div>
+                                <button id="refresh-btn"
+                                    class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all"
+                                    title="Refresh Links">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                        </path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr
+                                        class="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-widest border-b border-slate-100">
+                                        <th class="px-6 py-4">Short Link</th>
+                                        <th class="px-6 py-4">Destination</th>
+                                        <th class="px-6 py-4 text-center">Clicks</th>
+                                        <th class="px-6 py-4">Created</th>
+                                        <th class="px-6 py-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="links-list" class="divide-y divide-slate-100 text-sm">
+                                    <!-- Rows -->
+                                    <tr class="bg-white">
+                                        <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                                            <svg class="w-8 h-8 mb-3 text-slate-300 animate-spin mx-auto" fill="none"
+                                                viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                    stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                                </path>
+                                            </svg>
+                                            Loading data...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div
+                            class="px-6 py-4 border-t border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <span class="text-sm text-slate-500" id="pagination-info">Showing 0 of 0</span>
+                            <div class="flex space-x-2">
+                                <button id="prev-page" disabled
+                                    class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors">Previous</button>
+                                <button id="next-page" disabled
+                                    class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-colors">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Settings -->
+                <div id="section-settings"
+                    class="hidden space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <h1 class="text-3xl font-bold text-slate-900">Settings</h1>
+
+                    <form id="settings-form" class="space-y-6 max-w-2xl">
+                        <!-- URL Configuration -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+                            <h3 class="text-lg font-bold text-slate-900 mb-6 flex items-center">
+                                <span
+                                    class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9">
+                                        </path>
+                                    </svg>
+                                </span>
+                                URL Configuration
+                            </h3>
+
+                            <div class="space-y-6">
+                                <!-- Default Redirect -->
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-900 mb-2">Fallback URL
+                                        (404)</label>
+                                    <p class="text-sm text-slate-500 mb-2">Where should visitors go if they visit a link
+                                        that doesn't exist?</p>
+                                    <input type="url" id="fallback-url-input" placeholder="https://elandio.com"
+                                        class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Save Actions -->
+                        <div class="flex items-center justify-end space-x-4 pt-4">
+                            <button type="submit" id="save-settings-btn"
+                                class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-lg shadow-brand-500/30 transition-all transform hover:-translate-y-0.5">
+                                Save Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-200">
+        <div
+            class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-200">
+            <h2 class="text-xl font-bold text-slate-900 mb-6">Edit Link Destination</h2>
+            <input type="hidden" id="edit-slug" />
+            <div class="mb-6">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">New Target
+                    URL</label>
+                <input type="url" id="edit-url" required
+                    class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all" />
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-edit"
+                    class="px-5 py-2.5 rounded-xl text-slate-600 font-medium hover:bg-slate-50 transition-colors">Cancel</button>
+                <button id="save-edit"
+                    class="px-5 py-2.5 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all">Save
+                    Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 pb-8 text-center text-sm text-slate-400">
+        <p>Made with ❤️ by <a href="https://elandio.com" target="_blank"
+                class="text-brand-500 hover:text-brand-600 transition-colors">Elandio</a></p>
+    </footer>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center transition-opacity opacity-0">
+        <div
+            class="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 w-full max-w-md transform scale-95 transition-transform duration-200 m-4">
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Delete Link?</h3>
+            <p class="text-slate-600 mb-6">Are you sure you want to delete <span id="delete-link-slug"
+                    class="font-mono font-bold text-slate-900"></span>? This action cannot be undone.</p>
+            <div class="flex space-x-3">
+                <button id="cancel-delete-btn"
+                    class="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-slate-600 font-medium hover:bg-slate-50 transition-colors">Cancel</button>
+                <button id="confirm-delete-btn"
+                    class="flex-1 px-4 py-2 bg-red-600 rounded-xl text-white font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Path Mode Warning Modal -->
+    <div id="path-warning-modal"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center transition-opacity opacity-0">
+        <div
+            class="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 w-full max-w-md transform scale-95 transition-transform duration-200 m-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center mb-4 text-amber-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                    </path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Warning: Breaking Changes</h3>
+            <p class="text-slate-600 mb-4">Changing the URL path mode will break all existing links unless you manually
+                update them or your proxy configuration.</p>
+            <p class="text-sm bg-amber-50 p-3 rounded-lg text-amber-800 mb-6">
+                <strong>Example:</strong><br>
+                <span class="line-through opacity-50">domain.com/r/abc</span> &rarr; <strong>domain.com/abc</strong>
+            </p>
+            <div class="flex space-x-3">
+                <button id="cancel-path-change-btn"
+                    class="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-slate-600 font-medium hover:bg-slate-50 transition-colors">Cancel</button>
+                <button id="confirm-path-change-btn"
+                    class="flex-1 px-4 py-2 bg-amber-600 rounded-xl text-white font-bold hover:bg-amber-700 transition-colors shadow-lg shadow-amber-500/30">I
+                    Understand, Change It</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/dashboard.js"></script>
+</body>
+
+</html>
+```

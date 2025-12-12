@@ -1,0 +1,22 @@
+name = "elandio-trim"
+main = "src/worker/index.ts"
+compatibility_date = "2024-04-05"
+
+# Validates that this worker is only reachable via secure connections
+workers_dev = true
+
+# Assets config for serving the frontend
+[assets]
+directory = "./src/pages"
+binding = "ASSETS"
+
+# D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "elandio-trim-db"
+# database_id = "971e2940-c49e-41ef-9aa1-1004e3681df3" # <--- COMMENTED OUT FOR GITHUB. Cloudflare will ask you to create one during deployment.
+
+# Environment Variables (defaults)
+[vars]
+ENVIRONMENT = "production"
+# ADMIN_TOKEN = "Set this in Cloudflare dashboard for security"
