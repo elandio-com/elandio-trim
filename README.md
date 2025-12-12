@@ -231,7 +231,6 @@ If you find this useful, please:
 
 ---
 
-**Made with ❤️ by Elandio**
 
 **Made with ❤️ by Elandio**
 
