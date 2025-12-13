@@ -14,9 +14,9 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "elandio-trim-db"
-# database_id = "971e2940-c49e-41ef-9aa1-1004e3681df3" # <--- COMMENTED OUT FOR GITHUB. Cloudflare will ask you to create one during deployment.
+database_id = "xx-REPLACE-WITH-YOUR-DB-ID-xx" # Run 'wrangler d1 create elandio-trim-db' to get this
 
 # Environment Variables (defaults)
 [vars]
 ENVIRONMENT = "production"
-# ADMIN_TOKEN = "Set this in Cloudflare dashboard for security"
+ADMIN_TOKEN = "" # [REQUIRED] Add your password in Cloudflare Dashboard -> Settings -> Variables

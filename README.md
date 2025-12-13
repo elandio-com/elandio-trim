@@ -19,17 +19,30 @@ A simple, powerful, and self-hostable URL shortener built on **Cloudflare Worker
 
 ---
 
-## 🚀 Quick Deploy (Recommended)
+## 🚀 Quick Deploy (Web Interface)
 
-### For Everyone - No Coding Required!
+**No coding or terminal required!** Follow these steps:
 
-**3 Simple Steps:**
+### Phase 1: Create the Project
+1.  **Click the "Deploy to Cloudflare Workers" button** above ☝️.
+2.  Connect your GitHub account.
+3.  Cloudflare will fork this repository to your account and attempt to deploy.
+4.  🚨 **The initial deployment will FAIL.** This is expected! (It fails because it needs your unique Database ID).
 
-1. **Click the Deploy Button Above** ☝️
-2. **Set Your Password** - Choose a secure admin password
-3. **Visit Your URL** - Auto-setup runs on first visit
+### Phase 2: Create the Database
+1.  Log in to the [Cloudflare Dashboard](https://dash.cloudflare.com).
+2.  Go to **Storage & Databases** > **D1**.
+3.  Click **Create**. Name it `elandio-trim-db`.
+4.  **Copy the Database ID** (it looks like `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`).
 
-**That's it!** Your URL shortener is live. 🎉
+### Phase 3: Configure & Launch
+1.  Go to **Your GitHub Repository** (the one Cloudflare created for you).
+2.  Open the file `wrangler.toml`.
+3.  Click the ✏️ (Pencil Icon) to edit.
+4.  **Update Database ID**: Replace `xx-REPLACE-WITH-YOUR-DB-ID-xx` with your real ID.
+5.  **Set Password**: Change `ADMIN_TOKEN = ""` to `ADMIN_TOKEN = "your-secure-password"`.
+6.  Click **Commit changes**.
+7.  **Done!** Cloudflare will automatically detect the change, rebuild, and deploy successfully in seconds. 🎉
 
 ---
 
@@ -231,7 +244,8 @@ If you find this useful, please:
 
 ---
 
-
 **Made with ❤️ by Elandio**
+
+
 
 [Website](https://elandio.com) • [GitHub](https://github.com/elandio-com)
