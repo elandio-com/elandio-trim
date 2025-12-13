@@ -26,23 +26,18 @@ A simple, powerful, and self-hostable URL shortener built on **Cloudflare Worker
 ### Phase 1: Click & Deploy
 1.  **Click the "Deploy to Cloudflare Workers" button** above ☝️.
 2.  Connect your GitHub account.
-3.  **Config**: It might ask for an `ADMIN_TOKEN`. You can enter one now or set it later.
-4.  🚨 **Deployment might appear to succeed, BUT the app won't work yet.** (You'll see a database error or "Internal Server Error" if you visit the URL).
+3.  Cloudflare will create the project, the database, and deploy everything automatically!
 
-### Phase 2: Get Your Database ID
-*Cloudflare automatically created a database for you called `elandio-trim-db`.*
+### Phase 2: Set Admin Password (Required)
+*For security, we don't handle passwords during the basic setup.*
 1.  Log in to the [Cloudflare Dashboard](https://dash.cloudflare.com).
-2.  Go to **Storage & Databases** > **D1**.
-3.  Click `elandio-trim-db`.
-4.  **Copy the Database ID** (it looks like `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`).
-
-### Phase 3: Final Config (Required)
-1.  Go to **Your GitHub Repository** (the newly created one).
-2.  Open `wrangler.toml` and click ✏️ (Edit).
-3.  **Update Database ID**: Replace `xx-REPLACE-WITH-YOUR-DB-ID-xx` with your real ID from Phase 2.
-4.  **Check Token**: Ensure `ADMIN_TOKEN` is set, or add it here if you missed it in Phase 1.
-5.  Click **Commit changes**.
-6.  **Done!** Cloudflare will rebuild automatically. Now your link works! 🎉
+2.  Go to **Workers & Pages** > Click your new project (`elandio-trim`).
+3.  Go to **Settings** > **Variables**.
+4.  Click **Add Variable**:
+    *   Variable name: `ADMIN_TOKEN`
+    *   Value: **Your Secure Password**
+    *   Click **Encrypt** (Recommended) > **Save**.
+5.  Wait a few seconds, then open your App URL. **Login works!** 🎉
 
 ---
 

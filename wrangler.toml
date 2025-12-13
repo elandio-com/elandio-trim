@@ -19,4 +19,4 @@ database_id = "xx-REPLACE-WITH-YOUR-DB-ID-xx" # Run 'wrangler d1 create elandio-
 # Environment Variables (defaults)
 [vars]
 ENVIRONMENT = "production"
-ADMIN_TOKEN = "" # [REQUIRED] Add your password in Cloudflare Dashboard -> Settings -> Variables
+# ADMIN_TOKEN = "Set this in Cloudflare dashboard for security"
