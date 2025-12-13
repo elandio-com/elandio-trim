@@ -23,26 +23,26 @@ A simple, powerful, and self-hostable URL shortener built on **Cloudflare Worker
 
 **No coding or terminal required!** Follow these steps:
 
-### Phase 1: Create the Project
+### Phase 1: Click & Deploy
 1.  **Click the "Deploy to Cloudflare Workers" button** above ☝️.
 2.  Connect your GitHub account.
-3.  Cloudflare will fork this repository to your account and attempt to deploy.
-4.  🚨 **The initial deployment will FAIL.** This is expected! (It fails because it needs your unique Database ID).
+3.  **Config**: It might ask for an `ADMIN_TOKEN`. You can enter one now or set it later.
+4.  🚨 **Deployment might appear to succeed, BUT the app won't work yet.** (You'll see a database error or "Internal Server Error" if you visit the URL).
 
-### Phase 2: Create the Database
+### Phase 2: Get Your Database ID
+*Cloudflare automatically created a database for you called `elandio-trim-db`.*
 1.  Log in to the [Cloudflare Dashboard](https://dash.cloudflare.com).
 2.  Go to **Storage & Databases** > **D1**.
-3.  Click **Create**. Name it `elandio-trim-db`.
+3.  Click `elandio-trim-db`.
 4.  **Copy the Database ID** (it looks like `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`).
 
-### Phase 3: Configure & Launch
-1.  Go to **Your GitHub Repository** (the one Cloudflare created for you).
-2.  Open the file `wrangler.toml`.
-3.  Click the ✏️ (Pencil Icon) to edit.
-4.  **Update Database ID**: Replace `xx-REPLACE-WITH-YOUR-DB-ID-xx` with your real ID.
-5.  **Set Password**: Change `ADMIN_TOKEN = ""` to `ADMIN_TOKEN = "your-secure-password"`.
-6.  Click **Commit changes**.
-7.  **Done!** Cloudflare will automatically detect the change, rebuild, and deploy successfully in seconds. 🎉
+### Phase 3: Final Config (Required)
+1.  Go to **Your GitHub Repository** (the newly created one).
+2.  Open `wrangler.toml` and click ✏️ (Edit).
+3.  **Update Database ID**: Replace `xx-REPLACE-WITH-YOUR-DB-ID-xx` with your real ID from Phase 2.
+4.  **Check Token**: Ensure `ADMIN_TOKEN` is set, or add it here if you missed it in Phase 1.
+5.  Click **Commit changes**.
+6.  **Done!** Cloudflare will rebuild automatically. Now your link works! 🎉
 
 ---
 

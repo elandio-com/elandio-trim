@@ -17,12 +17,17 @@ export const router = {
         console.log(`[Router] ${method} ${path}`);
 
         // Check database for settings (only fallback_url now)
-        const { D1Adapter } = await import('../../adapters/d1Adapter');
-        const db = new D1Adapter(env.DB);
-        const dbFallbackUrl = await db.getSetting('fallback_url');
-        if (dbFallbackUrl) {
-            // @ts-ignore
-            env.FALLBACK_URL = dbFallbackUrl;
+        // Check database for settings (safely)
+        try {
+            const { D1Adapter } = await import('../../adapters/d1Adapter');
+            const db = new D1Adapter(env.DB);
+            const dbFallbackUrl = await db.getSetting('fallback_url');
+            if (dbFallbackUrl) {
+                // @ts-ignore
+                env.FALLBACK_URL = dbFallbackUrl;
+            }
+        } catch (e) {
+            console.warn('[Router] Failed to load settings from DB (ignoring):', e);
         }
 
         if (method === 'GET' && path === '/api/health') {
