@@ -1,0 +1,22 @@
+name = "elandio-trim"
+main = "src/worker/index.ts"
+compatibility_date = "2024-04-05"
+
+# Validates that this worker is only reachable via secure connections
+workers_dev = true
+
+# Assets config for serving the frontend
+[assets]
+directory = "./src/pages"
+binding = "ASSETS"
+
+# D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "elandio-trim-db"
+database_id = "xx-REPLACE-WITH-YOUR-DB-ID-xx" # Run 'wrangler d1 create elandio-trim-db' to get this
+
+# Environment Variables (defaults)
+[vars]
+ENVIRONMENT = "production"
+# ADMIN_TOKEN = "Set this in Cloudflare dashboard for security"
