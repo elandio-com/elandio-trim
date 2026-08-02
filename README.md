@@ -2,6 +2,16 @@
 
 A simple, self-hostable URL shortener built on **Cloudflare Workers**, **D1 Database**, and **Vanilla JS**. Designed for dedicated domains (e.g., `link.yourdomain.com`).
 
+<p align="center">
+  <img src="docs/images/dashboard.png"
+       alt="The Elandio Trim dashboard: total links, total clicks and top performing link across the top, a create-link form beneath, and a table of short links with their destinations, click counts and created dates."
+       width="900">
+</p>
+
+<p align="center">
+  <em>Create, track and manage short links from a single page. No build step, no dependencies.</em>
+</p>
+
 ---
 
 ## ✨ Features
@@ -81,6 +91,15 @@ npm run schema:sql   # regenerate database/schema.sql from src/worker/schema.ts
 ---
 
 ## 📖 Usage
+
+The landing page gives first-time visitors a way into the dashboard or the setup
+wizard:
+
+<p align="center">
+  <img src="docs/images/landing.png"
+       alt="The Elandio Trim landing page, showing the product name, links through to the dashboard and the setup wizard, and a short feature list."
+       width="760">
+</p>
 
 ### Creating links
 
