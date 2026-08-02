@@ -88,7 +88,7 @@ function showDashboard() {
 }
 
 // Tabs
-window.switchTab = (tab) => {
+function switchTab(tab) {
     // Hide all sections
     ['overview', 'settings'].forEach(t => {
         document.getElementById(`section-${t}`).classList.add('hidden');
@@ -106,6 +106,15 @@ window.switchTab = (tab) => {
         loadSettings();
     }
 }
+
+// Bound here rather than via inline onclick= so that CSP script-src can stay 'self'.
+document.querySelectorAll('[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+document.getElementById('scroll-to-create')?.addEventListener('click', () => {
+    document.getElementById('create-card')?.scrollIntoView({ behavior: 'smooth' });
+});
 
 // Auth Logic
 // Auth Logic
@@ -229,7 +238,7 @@ async function fetchLinks() {
             showAuth();
         } else {
             console.error(e);
-            linksList.innerHTML = `<tr class="bg-white"><td colspan="5" class="p-8 text-center text-red-500 bg-red-50">Error loading links: ${e.message}</td></tr>`;
+            linksList.innerHTML = `<tr class="bg-white"><td colspan="5" class="p-8 text-center text-red-500 bg-red-50">Error loading links: ${escapeHtml(e.message)}</td></tr>`;
         }
     }
 }

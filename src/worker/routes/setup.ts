@@ -1,104 +1,59 @@
-// @ts-ignore
-import { IRequest } from 'itty-router';
 import { Env } from '../types';
 import { D1Adapter } from '../../../adapters/d1Adapter';
+import { isAuthorized } from '../utils/auth';
+import { checkRateLimit, clientKey, SETUP_RATE_LIMIT } from '../middleware/rateLimit';
+import { SCHEMA_STATEMENTS } from '../schema';
 
-const SCHEMA_SQL = `
-CREATE TABLE IF NOT EXISTS links (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    slug TEXT UNIQUE NOT NULL,
-    target_url TEXT NOT NULL,
-    clicks INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+export async function setupDatabase(request: Request, env: Env): Promise<Response> {
+    if (!checkRateLimit(clientKey(request), SETUP_RATE_LIMIT, 'setup')) {
+        return json({ success: false, error: 'Rate limit exceeded. Please try again later.' }, 429);
+    }
 
-CREATE TABLE IF NOT EXISTS settings (
-    key TEXT PRIMARY KEY,
-    value TEXT,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-`;
+    if (!env.DB) {
+        console.error('[Setup] D1 binding "DB" is missing');
+        return json({ success: false, error: 'Database binding is not configured.' }, 500);
+    }
 
-// Simple in-memory rate limit for setup endpoint (per IP, 1/minute).
-const setupRequests = new Map<string, number>();
+    const db = new D1Adapter(env.DB);
 
-export async function setupDatabase(request: IRequest, env: Env): Promise<Response> {
+    // Once initialised, only an authenticated admin may re-run setup.
     try {
-        // [SECURITY] Rate limit setup endpoint to prevent abuse
-        // Allow only one setup per minute per IP
-        const clientIp = request.headers.get('CF-Connecting-IP') || 'unknown';
-        const now = Date.now();
-        const lastAttempt = setupRequests.get(clientIp) || 0;
-        if (now - lastAttempt < 60_000) {
-            return new Response(JSON.stringify({
-                success: false,
-                error: 'Rate limit exceeded. Please try again later.'
-            }), {
-                status: 429,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
-        setupRequests.set(clientIp, now);
-        // Note: This is a basic check. For production, use Cloudflare Rate Limiting rules.
-        
-        const db = new D1Adapter(env.DB);
-
-        // Check if already initialized
-        try {
-            const setupComplete = await db.getSetting('setup_complete');
-            if (setupComplete === 'true') {
-                // [SECURITY] Once initialized, prevent re-initialization unless authenticated
-                // This prevents database reset attacks
-                const token = request.headers.get('Authorization')?.replace('Bearer ', '') || request.headers.get('x-admin-token');
-                if (!token || token !== env.ADMIN_TOKEN) {
-                    return new Response(JSON.stringify({
-                        success: false,
-                        error: 'Database already initialized. Admin authentication required to reset.'
-                    }), {
-                        status: 403,
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                }
-                
-                return new Response(JSON.stringify({
-                    success: true,
-                    message: 'Database already initialized',
-                    redirect: '/dashboard.html'
-                }), {
-                    headers: { 'Content-Type': 'application/json' }
-                });
+        if ((await db.getSetting('setup_complete')) === 'true') {
+            if (!isAuthorized(request, env)) {
+                return json(
+                    { success: false, error: 'Database already initialized. Admin authentication required to reset.' },
+                    403
+                );
             }
-        } catch (e) {
-            // Table doesn't exist yet, continue with setup
+            return json({ success: true, message: 'Database already initialized', redirect: '/dashboard.html' }, 200);
         }
+    } catch {
+        // Settings table does not exist yet — expected on a first run.
+    }
 
-        // Execute schema
-        const statements = SCHEMA_SQL.split(';').filter(s => s.trim());
-        for (const statement of statements) {
-            if (statement.trim()) {
-                await env.DB.prepare(statement).run();
-            }
+    try {
+        // Every statement is CREATE ... IF NOT EXISTS, so re-running is a no-op
+        // and never drops existing links.
+        for (const statement of SCHEMA_STATEMENTS) {
+            await env.DB.prepare(statement).run();
         }
-
-        // Mark setup as complete
         await db.setSetting('setup_complete', 'true');
 
-        return new Response(JSON.stringify({
-            success: true,
-            message: 'Database initialized successfully!',
-            redirect: '/dashboard.html'
-        }), {
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-    } catch (e: any) {
+        return json({ success: true, message: 'Database initialized successfully!', redirect: '/dashboard.html' }, 200);
+    } catch (e) {
+        // Logged in full server-side; the client gets a generic message so that
+        // schema and driver details are not exposed to an unauthenticated caller.
         console.error('[Setup] Error:', e);
-        return new Response(JSON.stringify({
-            success: false,
-            error: e.message
-        }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return json({ success: false, error: 'Database initialization failed. Check the worker logs.' }, 500);
     }
+}
+
+function json(body: unknown, status: number): Response {
+    return new Response(JSON.stringify(body), {
+        status,
+        headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+        },
+    });
 }

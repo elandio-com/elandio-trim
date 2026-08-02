@@ -5,29 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Setup - Elandio URL Shortener</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="styles.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Outfit', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            900: '#1e3a8a',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <script src="/vendor/tailwind.js"></script>
+    <script src="/tailwind-config.js"></script>
+    <link rel="stylesheet" href="/styles.css">
 </head>
 
 <body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen flex items-center justify-center p-4">
@@ -99,7 +79,7 @@
                 </div>
                 <h2 class="text-xl font-bold text-slate-900 mb-2">Setup Failed</h2>
                 <p class="text-slate-500 text-sm mb-6" id="error-message">Something went wrong</p>
-                <button onclick="location.reload()"
+                <button id="retry-btn"
                     class="w-full bg-slate-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-slate-700 transition-colors">
                     Try Again
                 </button>
@@ -107,33 +87,7 @@
         </div>
     </div>
 
-    <script>
-        async function runSetup() {
-            try {
-                const res = await fetch('/api/setup', { method: 'POST' });
-                const data = await res.json();
-
-                if (data.success) {
-                    document.getElementById('setup-card').classList.add('hidden');
-                    document.getElementById('success-card').classList.remove('hidden');
-
-                    // Auto-redirect after 2 seconds
-                    setTimeout(() => {
-                        window.location.href = data.redirect || '/dashboard.html';
-                    }, 2000);
-                } else {
-                    throw new Error(data.error || 'Setup failed');
-                }
-            } catch (e) {
-                document.getElementById('setup-card').classList.add('hidden');
-                document.getElementById('error-card').classList.remove('hidden');
-                document.getElementById('error-message').textContent = e.message;
-            }
-        }
-
-        // Run setup on page load
-        runSetup();
-    </script>
+    <script src="/setup.js"></script>
 </body>
 
 </html>

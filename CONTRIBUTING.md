@@ -18,29 +18,48 @@ Thank you for your interest in contributing! 🎉
 # Install dependencies
 npm install
 
+# Local admin token (.dev.vars is gitignored)
+printf 'ENVIRONMENT="development"\nADMIN_TOKEN="dev-token"\n' > .dev.vars
+
 # Start local development server
 npm run dev
-
-# Initialize local database
-npx wrangler d1 execute url-shortener-db --local --file=./database/schema.sql
 ```
+
+Then open `http://localhost:8787/setup.html` once to create the tables.
 
 ## Code Style
 
-- Use TypeScript for type safety
+- Use TypeScript for type safety — `npm run typecheck` must pass (`strict` mode)
 - Follow existing code formatting
-- Add comments for complex logic
+- Comment *why*, not *what*. Never describe a guarantee the code doesn't provide
 - Keep functions small and focused
+
+## Schema changes
+
+`src/worker/schema.ts` is the single source of truth. Edit it, then regenerate
+the SQL file so the two cannot drift:
+
+```bash
+npm run schema:sql
+```
+
+Do not edit `database/schema.sql` by hand — it is generated.
 
 ## Testing
 
-Before submitting a PR, please test:
-- ✅ Link creation (with and without custom slug)
-- ✅ Link redirection
-- ✅ Dashboard authentication
-- ✅ Settings management
-- ✅ Search and pagination
-- ✅ Edit and delete operations
+There is no automated test suite yet; adding one is a welcome contribution. The
+pure functions in `src/worker/utils/` (`validateUrl`, `slug`, `auth`) are the
+natural starting point.
+
+Until then, before submitting a PR please verify manually:
+- ✅ `npm run typecheck` passes
+- ✅ Link creation, with and without a custom slug
+- ✅ Duplicate slug returns 409; reserved slug returns 400
+- ✅ Link redirection, and that the click count increments
+- ✅ Dashboard authentication, and that a wrong token is rejected
+- ✅ Settings management, including an invalid fallback URL being rejected
+- ✅ Search, pagination, edit and delete
+- ✅ Browser console is free of CSP violations on every page
 
 ## Feature Requests
 

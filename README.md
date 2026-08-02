@@ -1,43 +1,51 @@
 # Elandio Trim - URL Shortener
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/elandio-com/elandio-trim)
-
-A simple, powerful, and self-hostable URL shortener built on **Cloudflare Workers**, **D1 Database**, and **Vanilla JS**. Designed for dedicated domains (e.g., `link.yourdomain.com`).
+A simple, self-hostable URL shortener built on **Cloudflare Workers**, **D1 Database**, and **Vanilla JS**. Designed for dedicated domains (e.g., `link.yourdomain.com`).
 
 ---
 
 ## ✨ Features
 
-- 🚀 **One-Click Deploy** - Live in 60 seconds
-- 🎨 **Beautiful Dashboard** - Modern, premium UI
-- ⚙️ **Dashboard Config** - Zero code editing required
-- 🔒 **Secure** - Admin authentication, input validation, strict headers
-- 📊 **Analytics** - Click tracking and statistics
-- 🌐 **Custom Domains** - Use your own domain
-- 💰 **Free-Tier Friendly** - Runs comfortably on Cloudflare's free tier for most use cases
-- 🎯 **Auto-Setup** - Database initializes automatically
+- 🎨 **Clean dashboard** — create, edit, search and delete links
+- ⚙️ **Configured from the UI** — no code editing to change settings
+- 📊 **Click tracking** — per-link counts and totals
+- 🌐 **Custom domains** — run it on `link.yourdomain.com`
+- 🔒 **Locked down by default** — strict CSP, security headers on every response, validated redirect targets
+- 🪶 **No build step** — vanilla JS, vendored CSS, self-hosted fonts
+- 💰 **Free-tier friendly** — comfortably within Cloudflare's free limits for typical use
 
 ---
 
-## 🚀 Quick Deploy (Web Interface)
+## 🚀 Deploy
 
-**No coding or terminal required!** Follow these steps:
+Deployment takes about 10 minutes and **does require the terminal once**, to
+create the D1 database and paste its id into `wrangler.toml`. Cloudflare cannot
+provision the database for you from the deploy button alone.
 
-### Phase 1: Click & Deploy
-1.  **Click the "Deploy to Cloudflare Workers" button** above ☝️.
-2.  Connect your GitHub account.
-3.  Cloudflare will create the project, the database, and deploy everything automatically!
+```bash
+git clone https://github.com/elandio-com/elandio-trim.git
+cd elandio-trim
+npm install
 
-### Phase 2: Set Admin Password (Required)
-*For security, we don't handle passwords during the basic setup.*
-1.  Log in to the [Cloudflare Dashboard](https://dash.cloudflare.com).
-2.  Go to **Workers & Pages** > Click your new project (`elandio-trim`).
-3.  Go to **Settings** > **Variables**.
-4.  Click **Add Variable**:
-    *   Variable name: `ADMIN_TOKEN`
-    *   Value: **Your Secure Password**
-    *   Click **Encrypt** (Recommended) > **Save**.
-5.  Wait a few seconds, then open your App URL. **Login works!** 🎉
+# 1. Create the database, then paste the printed id into wrangler.toml
+npx wrangler d1 create elandio-trim-db
+
+# 2. Set your admin token as an encrypted secret
+openssl rand -base64 32          # copy the output
+npx wrangler secret put ADMIN_TOKEN
+
+# 3. Deploy
+npx wrangler deploy
+```
+
+Then open `https://<your-worker>.workers.dev/setup.html` once to initialise the
+tables, and log in at `/dashboard.html`.
+
+Full walkthrough, including custom domains: **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
+
+> **Never put `ADMIN_TOKEN` in `wrangler.toml`.** That file is committed to git
+> and its values are visible in plain text. Use `wrangler secret put`, or the
+> Cloudflare dashboard with **Encrypt** selected.
 
 ---
 
@@ -46,71 +54,64 @@ A simple, powerful, and self-hostable URL shortener built on **Cloudflare Worker
 ### Local Development
 
 ```bash
-# Clone the repository
 git clone https://github.com/elandio-com/elandio-trim.git
 cd elandio-trim
-
-# Install dependencies
 npm install
 
-# Create local database
-npx wrangler d1 create elandio-trim-db --local
+# Local admin token — .dev.vars is gitignored
+printf 'ENVIRONMENT="development"\nADMIN_TOKEN="dev-token"\n' > .dev.vars
 
-# Initialize database
-npx wrangler d1 execute elandio-trim-db --local --file=./database/schema.sql
-
-# Start development server (default port 8787)
+# Start the dev server (default port 8787)
 npm run dev
 ```
 
-Visit `http://localhost:8787/dashboard.html`
+Open `http://localhost:8787/setup.html` once to create the tables, then log in at
+`http://localhost:8787/dashboard.html`.
 
-### Manual Deployment
+In `development`, URL validation is relaxed to accept `http://` and localhost
+targets. Production requires HTTPS and rejects private/loopback addresses.
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
+Useful scripts:
+
+```bash
+npm run typecheck    # tsc --noEmit, strict mode
+npm run schema:sql   # regenerate database/schema.sql from src/worker/schema.ts
+```
 
 ---
 
 ## 📖 Usage
 
-### Creating Short Links
+### Creating links
 
-1. Visit `/dashboard.html`
-2. Login with your admin password
-3. Enter a URL to shorten
-4. (Optional) Choose a custom slug
-5. Click "Create Link"
+1. Open `/dashboard.html` and log in with your `ADMIN_TOKEN`.
+2. Enter the target URL (e.g. `https://example.com/a/very/long/path`).
+3. Optionally enter a custom slug, or leave it blank to auto-generate one.
+4. Click **Shorten**. The link is live immediately at `https://link.yourdomain.com/<slug>`.
 
-Your short link is ready! Share it anywhere.
+Slugs may contain letters, numbers, hyphens and underscores, up to 50 characters.
+A handful of names (`api`, `dashboard`, `setup`, `vendor`, `fonts`, …) are
+reserved so links can never shadow the app's own pages.
 
-### Dashboard Features
+### Overview tab
 
-**Overview Tab:**
-- View all your links
-- See click statistics
-- Search and filter links
-- Edit or delete links
+View every link with its click count, search and filter, edit a target URL, or
+delete a link.
 
+### Settings tab
 
-### Accessing the Dashboard
-Navigate to `https://link.yourdomain.com/dashboard.html` (or your workers.dev URL) and log in with your admin token.
-
-### Creating Links
-1.  Enter the target URL (e.g., `https://google.com`).
-2.  Enter a custom slug (e.g., `google`) or let it auto-generate.
-3.  Click **Shorten**.
-4.  Your link is live at `https://link.yourdomain.com/google`.
-
-### Settings
-- **Fallback URL:** Configure where users should be redirected if they visit a non-existent link (404).
+**Fallback URL** — where visitors are sent when they hit a slug that doesn't
+exist. Leave it empty to serve the built-in 404 page instead.
 
 ## 🔧 Configuration
 
-You can set these in Cloudflare **Settings → Variables** (or `.dev.vars` locally):
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `ADMIN_TOKEN` | **Yes** | The admin credential. Set it as an **encrypted secret**, never in `wrangler.toml`. The worker refuses to serve without it. |
+| `ENVIRONMENT` | No | `development` relaxes URL validation. Defaults to production behaviour. |
+| `FALLBACK_URL` | No | Redirect target for unknown slugs. The dashboard setting takes precedence over this. |
 
-- `ADMIN_TOKEN` (required): Static admin token used by the dashboard and API.
-- `ENVIRONMENT` (optional): `development` or `production` (defaults to production).
-- `FALLBACK_URL` (optional): Redirect destination for unknown slugs (404).
+Locally these go in `.dev.vars` (gitignored).
 
 ## 🧱 Architecture
 
@@ -120,21 +121,51 @@ You can set these in Cloudflare **Settings → Variables** (or `.dev.vars` local
 
 ## 🔐 Security Model
 
-This project is intended for **single‑admin, self‑hosted** use. It uses a **static admin token** (no user accounts, no sessions, no cookies). This is deliberate for simplicity and transparency in a self‑hosted model.
+Intended for **single-admin, self-hosted** use. A single static admin token — no
+user accounts, no sessions, no cookies — deliberately chosen to keep a
+self-hosted deployment to one moving part. It is **not** suitable for
+multi-tenant use.
+
+Read **[SECURITY.md](./SECURITY.md)** before deploying publicly. It documents the
+threat model and the known limitations honestly, including the ones that are not
+fixed.
 
 ## ⚖️ Rate Limits (Default)
 
-- `/api/*` endpoints: **5 requests/second per IP**
-- `/api/setup`: **1 request/minute per IP**
+| Surface | Limit |
+| --- | --- |
+| `/api/*` | 5 requests/second per IP |
+| Slug lookups (redirects) | 20 requests/second per IP |
+| `/api/setup` | 1 request/minute per IP |
 
-If you need higher limits, adjust `src/worker/middleware/rateLimit.ts` and/or use Cloudflare WAF rate limiting.
+Redirects are rate limited because each one performs a D1 **write** to count the
+click, so an unthrottled loop could burn the free tier's write quota. Static
+assets are not rate limited.
+
+These limits are per worker isolate and therefore best-effort — for real
+protection use **Cloudflare WAF rate limiting rules**. Adjust the defaults in
+`src/worker/middleware/rateLimit.ts`.
 
 ## ⚡ API Endpoints
 
-- `POST /api/admin/create`: Create new link
-- `GET /api/admin/list`: List all links
-- `DELETE /api/admin/:slug`: Delete a link
-- `PUT /api/admin/settings`: Update settings
+All `/api/admin/*` routes require `Authorization: Bearer <ADMIN_TOKEN>`
+(or an `x-admin-token` header).
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/health` | Liveness + database state. Unauthenticated. |
+| `POST` | `/api/setup` | Initialise tables. Requires auth once initialised. |
+| `POST` | `/api/admin/login` | Validate a token (no session is created). |
+| `POST` | `/api/admin/create` | Create a link. `{ url, slug? }` |
+| `GET` | `/api/admin/list` | List all links. |
+| `PUT` | `/api/admin/:slug` | Update a link's target. `{ url }` |
+| `DELETE` | `/api/admin/:slug` | Delete a link. |
+| `GET` | `/api/admin/settings` | Read settings. |
+| `PUT` | `/api/admin/settings` | Update settings. |
+
+`/api/health` reports `{"status":"ok","database":"ok"}` when the database is
+reachable and initialised, and `503` with `"status":"setup_required"` when it is
+not — which makes it a genuine check that setup succeeded.
 
 ---
 
@@ -152,30 +183,33 @@ Done! Your links now use your custom domain.
 
 ## 🔒 Security Best Practices
 
-### For Administrators
+### For administrators
 
-1. **Use a Strong Password**
-   - Minimum 32 characters
-   - Mix of letters, numbers, symbols
-   - Generate with: `openssl rand -base64 32`
+1. **Use a strong token.** Generate it, don't invent it — `/api/admin/login`
+   validates submitted tokens, so a guessable one will eventually be guessed:
+   ```bash
+   openssl rand -base64 32
+   ```
+2. **Store it encrypted.** Use `wrangler secret put ADMIN_TOKEN`, or the
+   Cloudflare dashboard with **Encrypt** selected. Never `wrangler.toml`.
+3. **Add WAF rate limiting** if the deployment is public. The built-in limiter is
+   per-isolate and cannot stop a distributed attacker on its own.
+4. **Monitor and rotate.** Check Cloudflare logs, delete suspicious links, and
+   rotate the token periodically.
+5. **Back up D1**: `wrangler d1 export <db> --output backup.sql`.
 
+### Built-in protections
 
+✅ **Authentication** — admin token required, compared in constant time  
+✅ **SQL injection** — every query uses bound parameters  
+✅ **Strict CSP** — `script-src 'self'`, no inline scripts, no third-party origins  
+✅ **Headers on every response** — HSTS, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, COOP  
+✅ **Input validation** — URL scheme and slug format validated from a single shared definition  
+✅ **Reserved paths** — links can never shadow the app's own pages or assets  
+✅ **Redirect validation** — blocks non-HTTPS, private/loopback literals, and control characters  
+✅ **Rate limiting** — on the API *and* on redirects  
 
-3. **Monitor Your Links**
-   - Check Cloudflare Dashboard logs
-   - Delete suspicious links
-   - Rotate password periodically
-
-### Built-in Security Features
-
-✅ **Authentication** - Admin token required  
-✅ **Input Validation** - URLs and slugs sanitized  
-✅ **SQL Injection Protection** - Parameterized queries  
-✅ **XSS Prevention** - Strict slug format  
-✅ **Reserved Paths** - System routes protected  
-✅ **HTTPS Only** - Cloudflare enforced  
-✅ **Rate Limiting** - Built-in protection  
-✅ **Open Redirect Prevention** - URL validation (blocks private IPs/localhost + unsafe characters)  
+See [SECURITY.md](./SECURITY.md) for what is **not** covered.
 
 ---
 
@@ -187,14 +221,19 @@ Done! Your links now use your custom domain.
 - Clear browser cache
 
 ### Database not initialized
-- Visit `/setup.html` directly
-- Check browser console for errors
-- Verify database ID in `wrangler.toml`
+- Check `GET /api/health` — `"database":"uninitialized"` confirms it
+- Visit `/setup.html` to initialise
+- Verify `database_id` in `wrangler.toml` is a real id, not the placeholder
 
 ### Links not redirecting
-- Verify database initialized (visit `/api/health`)
-- Check Cloudflare Dashboard logs
-- Ensure slug exists in dashboard
+- Check `GET /api/health` returns `"database":"ok"`
+- Confirm the slug exists in the dashboard
+- Check Cloudflare logs for the worker
+
+### Security headers missing
+- Confirm `run_worker_first = true` is still set under `[assets]` in
+  `wrangler.toml`. Without it Cloudflare serves static files directly, the worker
+  never runs, and no headers are applied to HTML.
 
 ### Custom domain not working
 - Wait 1-2 minutes for DNS propagation
@@ -219,11 +258,19 @@ Cloudflare’s free tier is typically enough for personal and small business use
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** HTML, JavaScript, Tailwind CSS
-- **Backend:** Cloudflare Workers (TypeScript)
+- **Frontend:** HTML, vanilla JavaScript, Tailwind CSS (vendored browser build, no build step)
+- **Backend:** Cloudflare Workers (TypeScript, `strict` mode)
 - **Database:** Cloudflare D1 (SQLite)
-- **Security:** Admin tokens, Input Validation
 - **Deployment:** Wrangler CLI
+- **Runtime dependencies:** none
+
+Fonts (`Outfit`) and Tailwind are self-hosted under `src/pages/fonts/` and
+`src/pages/vendor/`, so no third-party origin is contacted at runtime and the CSP
+can stay locked to `'self'`. To update Tailwind:
+
+```bash
+curl -o src/pages/vendor/tailwind.js https://cdn.tailwindcss.com/3.4.16
+```
 
 ---
 
@@ -239,7 +286,22 @@ Contributions welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ## 📄 License
 
-MIT License - see [LICENSE](./LICENSE) for details.
+**Apache License 2.0** — see [LICENSE](./LICENSE).
+
+You are free to use, modify, self-host and run this commercially, for free,
+whether you're an individual, a freelancer, or an agency running it for clients.
+No permission needed and nothing to pay.
+
+Two things the license asks in return:
+
+- **Keep the attribution.** If you redistribute it, keep the `LICENSE` and
+  `NOTICE` files and state what you changed.
+- **Don't use the name.** The license covers the *code*, not the *brand*.
+  "Elandio" and "Elandio Trim" are trademarks — fork it freely, but don't call
+  your fork Elandio Trim or imply it's endorsed by us. (Section 6 of the License.)
+
+> Releases up to and including v1.0.0 were published under the MIT License, and
+> remain available under those terms. Later versions are Apache 2.0.
 
 ---
 

@@ -2,21 +2,33 @@ name = "elandio-trim"
 main = "src/worker/index.ts"
 compatibility_date = "2024-04-05"
 
-# Validates that this worker is only reachable via secure connections
+# Also expose the worker on <name>.<subdomain>.workers.dev, so a deployment is
+# reachable before a custom domain is attached.
 workers_dev = true
 
 # Assets config for serving the frontend
+#
+# run_worker_first is required, not cosmetic. Without it Cloudflare serves any
+# matching static file directly and the Worker never runs, so none of the
+# security headers in middleware/securityHeaders.ts were ever applied to an HTML
+# page — CSP existed only on API responses, where it does nothing.
 [assets]
 directory = "./src/pages"
 binding = "ASSETS"
+run_worker_first = true
 
 # D1 Database Binding
+#
+# `wrangler deploy` will fail until database_id is filled in. Create the database
+# with `wrangler d1 create elandio-trim-db` and paste the id it prints here.
 [[d1_databases]]
 binding = "DB"
 database_name = "elandio-trim-db"
-database_id = "xx-REPLACE-WITH-YOUR-DB-ID-xx" # Run 'wrangler d1 create elandio-trim-db' to get this
+database_id = "xx-REPLACE-WITH-YOUR-DB-ID-xx"
 
-# Environment Variables (defaults)
 [vars]
 ENVIRONMENT = "production"
-# ADMIN_TOKEN = "Set this in Cloudflare dashboard for security"
+# ADMIN_TOKEN is intentionally NOT set here: values in this file are committed to
+# git and shown in plain text. Set it as an encrypted secret instead, either with
+# `wrangler secret put ADMIN_TOKEN` or in the Cloudflare dashboard under
+# Settings -> Variables. Locally, put it in .dev.vars (gitignored).

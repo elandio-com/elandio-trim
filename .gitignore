@@ -11,3 +11,8 @@ dist/
 *.swo
 *~
 .cache/
+
+# Signing keys — never commit these
+keys/
+*.pem
+*.key

@@ -1,0 +1,28 @@
+Elandio Trim
+Copyright 2024-2026 Elandio (https://elandio.com)
+
+This product includes software developed by Elandio.
+
+Licensed under the Apache License, Version 2.0. See the LICENSE file.
+
+"Elandio" and "Elandio Trim", together with the Elandio name and logo, are
+trademarks of Elandio. The Apache License grants rights to the software; it does
+not grant permission to use these marks. Forks and derivative works are welcome
+under the terms of the License, but must not use the Elandio name or branding in
+a way that suggests endorsement by, or affiliation with, Elandio. See section 6
+of the LICENSE file.
+
+--------------------------------------------------------------------------------
+Third-party components bundled in this repository
+--------------------------------------------------------------------------------
+
+Tailwind CSS  —  src/pages/vendor/tailwind.js
+    Copyright (c) Tailwind Labs, Inc.
+    Licensed under the MIT License.
+    https://github.com/tailwindlabs/tailwindcss
+
+Outfit  —  src/pages/fonts/outfit-latin.woff2, src/pages/fonts/outfit-latin-ext.woff2
+    Copyright 2021 The Outfit Project Authors
+    Licensed under the SIL Open Font License, Version 1.1.
+    Full license text: src/pages/fonts/OFL.txt
+    https://github.com/Outfitio/Outfit-Fonts
