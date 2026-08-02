@@ -1,40 +1,55 @@
-import { router } from './router';
+import { handle } from './router';
 import { addSecurityHeaders } from './middleware/securityHeaders';
-import { rateLimit } from './middleware/rateLimit';
+import {
+    checkRateLimit,
+    clientKey,
+    tooManyRequests,
+    API_RATE_LIMIT,
+    REDIRECT_RATE_LIMIT,
+} from './middleware/rateLimit';
+import { isAdminTokenConfigured } from './utils/auth';
+import { isSlugShaped } from './utils/slug';
 import { Env } from './types';
+
+/** Paths that must stay reachable before ADMIN_TOKEN has been configured. */
+const BOOTSTRAP_PATHS = new Set(['/api/health', '/api/setup', '/setup.html', '/setup.js']);
 
 export default {
     async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-        // [SECURITY] Validate ADMIN_TOKEN is configured
-        // This prevents deployment without proper authentication
-        if (!env.ADMIN_TOKEN || env.ADMIN_TOKEN.trim().length === 0) {
-            const url = new URL(request.url);
-            // Allow health check and setup to work without ADMIN_TOKEN
-            if (url.pathname !== '/api/health' && url.pathname !== '/api/setup' && !url.pathname.startsWith('/setup.html')) {
-                console.error('[Worker] ADMIN_TOKEN not configured!');
-                return addSecurityHeaders(new Response('Server configuration error. Please set ADMIN_TOKEN.', { status: 500 }));
+        const url = new URL(request.url);
+        const path = url.pathname;
+
+        // Refuse to serve an unconfigured deployment, except for the handful of
+        // paths the operator needs in order to finish configuring it.
+        if (!isAdminTokenConfigured(env) && !BOOTSTRAP_PATHS.has(path)) {
+            console.error('[Worker] ADMIN_TOKEN is not configured');
+            return addSecurityHeaders(
+                new Response('Server configuration error. Please set ADMIN_TOKEN.', { status: 500 })
+            );
+        }
+
+        // Redirects are rate limited too, not just /api/*. Each one performs a D1
+        // write to count the click, so leaving them unlimited let anyone burn the
+        // operator's write quota.
+        //
+        // Static assets are deliberately excluded: one dashboard page load pulls
+        // roughly seven files, and throttling those would break the UI rather than
+        // protect anything — serving them costs no database work.
+        const isApi = path.startsWith('/api/');
+        const isSlugLookup = !isApi && isSlugShaped(path.slice(1));
+
+        if (isApi || isSlugLookup) {
+            const rule = isApi ? API_RATE_LIMIT : REDIRECT_RATE_LIMIT;
+            if (!checkRateLimit(clientKey(request), rule, isApi ? 'api' : 'redirect')) {
+                return addSecurityHeaders(tooManyRequests(Math.ceil(rule.windowMs / 1000)));
             }
         }
 
-        // [SECURITY] Basic Rate Limiting (In-Memory)
-        // Note: In-memory rate limiting is ephemeral in Workers. For production,
-        // use Cloudflare WAF Rate Limiting rules or Cloudflare KV for distributed rate limiting.
-        // This provides basic protection but may not be fully effective in distributed scenarios.
-        const url = new URL(request.url);
-        if (url.pathname.startsWith('/api/')) {
-            const rateLimitError = await rateLimit(request);
-            if (rateLimitError) return rateLimitError;
-        }
-
-        console.log(`[Worker] Incoming request: ${request.method} ${request.url}`);
-
         try {
-            const response = await router.handle(request, env, ctx);
-            // [SECURITY] Apply Security Headers (HSTS, CSP, etc.)
-            return addSecurityHeaders(response);
-        } catch (e: any) {
-            // [SECURITY] Prevent Error Leakage
-            console.error('[Worker] Error handling request:', e);
+            return addSecurityHeaders(await handle(request, env, ctx));
+        } catch (e) {
+            // Log server-side; never return internals to the client.
+            console.error('[Worker] Unhandled error:', e);
             return addSecurityHeaders(new Response('Internal Server Error', { status: 500 }));
         }
     },

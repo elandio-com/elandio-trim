@@ -10,13 +10,14 @@ This guide will walk you through deploying your URL shortener to Cloudflare Work
 
 ---
 
-## Method 1: One-Click Deploy (Easiest)
-
-**Coming Soon!** Once this repo is on GitHub, you'll be able to click the "Deploy to Cloudflare Workers" button in the README.
+> **On one-click deploy:** there isn't one, and there can't be a complete one.
+> The deploy button cannot provision a D1 database and write its id back into
+> `wrangler.toml`, so a button-only deploy would come up with a broken database
+> binding. The steps below are the supported path.
 
 ---
 
-## Method 2: Manual Deployment (Current)
+## Deployment
 
 ### Step 1: Install Wrangler CLI
 
@@ -62,16 +63,27 @@ Wrangler will output your worker URL, something like:
 https://url-shortener.your-name.workers.dev
 ```
 
-### Step 6: Set Admin Password
+### Step 6: Set Admin Token
 
-1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com)
-2. Navigate to **Workers & Pages**
-3. Click your worker
-4. Go to **Settings** → **Variables**
-5. Click **Add variable**
-   - Name: `ADMIN_TOKEN`
-   - Value: Your secure password (e.g., `MySecurePassword123!`)
-6. Click **Deploy**
+Generate a real random token — do **not** invent a memorable one. `/api/admin/login`
+validates submitted tokens, so a guessable token will eventually be guessed:
+
+```bash
+openssl rand -base64 32
+```
+
+Store it as an encrypted secret:
+
+```bash
+wrangler secret put ADMIN_TOKEN
+```
+
+Or via the dashboard: **Workers & Pages** → your worker → **Settings** →
+**Variables** → **Add variable**, name `ADMIN_TOKEN`, paste the value, tick
+**Encrypt**, then **Deploy**.
+
+> Never put `ADMIN_TOKEN` in `wrangler.toml` — that file is committed to git and
+> its values are stored and displayed in plain text.
 
 ### Step 7: Initialize Database
 
@@ -148,22 +160,22 @@ When you make changes:
 wrangler deploy
 
 # If database schema changed
-wrangler d1 execute url-shortener-db --remote --file=./database/schema.sql
+wrangler d1 execute elandio-trim-db --remote --file=./database/schema.sql
 ```
 
 ---
 
 ## Cost
 
-**Free Tier Limits:**
-- 100,000 requests/day
-- 10 GB storage
-- Unlimited D1 database reads
-- 5 million D1 writes/month
+Cloudflare's free tier is comfortably enough for personal and small-business use.
+Quoted limits go stale, so check the current numbers directly:
 
-**This is more than enough for most personal/small business use!**
+- [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/)
+- [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/)
 
-If you exceed limits, Cloudflare Workers paid plan starts at $5/month for 10 million requests.
+The figure worth watching is **D1 writes**: every redirect performs one to count
+the click, so writes scale with link traffic rather than with the number of
+links. Redirect rate limiting is enabled by default partly to keep that bounded.
 
 ---
 

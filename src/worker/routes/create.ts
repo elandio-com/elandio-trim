@@ -1,85 +1,84 @@
-// @ts-ignore
-import { IRequest } from 'itty-router';
 import { Env } from '../types';
 import { D1Adapter } from '../../../adapters/d1Adapter';
 import { validateUrl } from '../utils/validateUrl';
 import { generateSlug } from '../utils/generateSlug';
+import { validateSlug, SLUG_MIN_LENGTH, SLUG_MAX_LENGTH } from '../utils/slug';
+import { isAuthorized, unauthorized } from '../utils/auth';
 
-function getDb(env: Env) {
-    return new D1Adapter(env.DB);
-}
+const SLUG_GENERATION_ATTEMPTS = 5;
 
-export async function createLink(request: IRequest, env: Env): Promise<Response> {
-    // 1. Auth Check (SECURITY: removed query parameter token support)
-    if (!env.ADMIN_TOKEN || env.ADMIN_TOKEN.trim().length === 0) {
-        console.error('[Create] ADMIN_TOKEN not configured');
-        return new Response('Server configuration error', { status: 500 });
+export async function createLink(request: Request, env: Env): Promise<Response> {
+    if (!isAuthorized(request, env)) return unauthorized();
+
+    let url: string;
+    let slug: string | undefined;
+    try {
+        ({ url, slug } = (await request.json()) as { url: string; slug?: string });
+    } catch {
+        return new Response('Invalid JSON body', { status: 400 });
     }
-    
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '') || request.headers.get('x-admin-token');
-    if (!token || token !== env.ADMIN_TOKEN) {
-        return new Response('Unauthorized', { status: 401 });
-    }
 
-    const { url, slug } = await request.json() as { url: string, slug?: string };
-
-    // 2. Validation
     if (!url || !validateUrl(url, env)) {
         return new Response('Invalid URL', { status: 400 });
     }
     const normalizedUrl = new URL(url).toString();
 
-    // 3. DB Init
-    const db = getDb(env);
+    const db = new D1Adapter(env.DB);
 
-    // 5. Slug Generation logic
-    let finalSlug = slug;
-    if (!finalSlug) {
-        let attempts = 0;
-        while (attempts < 5) {
-            const candidate = generateSlug();
-            const existing = await db.getLink(candidate);
-            if (!existing) {
-                finalSlug = candidate;
-                break;
-            }
-            attempts++;
-        }
-        if (!finalSlug) return new Response('Could not generate unique slug', { status: 500 });
-    } else {
-        // SECURITY: Validate custom slug format
-        // Only allow alphanumeric characters, hyphens, and underscores
-        if (!/^[a-zA-Z0-9_-]+$/.test(finalSlug)) {
+    if (slug) {
+        const problem = validateSlug(slug);
+        if (problem === 'invalid_characters') {
             return new Response('Slug can only contain letters, numbers, hyphens, and underscores', { status: 400 });
         }
-
-        // Check length
-        if (finalSlug.length < 1 || finalSlug.length > 50) {
-            return new Response('Slug must be between 1 and 50 characters', { status: 400 });
+        if (problem === 'invalid_length') {
+            return new Response(`Slug must be between ${SLUG_MIN_LENGTH} and ${SLUG_MAX_LENGTH} characters`, { status: 400 });
         }
-
-        // Check reserved slugs
-        const denied = ['api', 'admin', 'dashboard', 'assets', 'favicon.ico', 'setup', 'health', 'settings', 'styles.css', 'dashboard.html', 'dashboard.js', '404.html', 'setup.html'];
-        if (denied.includes(finalSlug.toLowerCase())) {
+        if (problem === 'reserved') {
             return new Response('Slug reserved', { status: 400 });
         }
 
-        const existing = await db.getLink(finalSlug);
-        if (existing) {
-            return new Response('Slug already in use', { status: 409 });
+        try {
+            const link = await db.createLink(slug, normalizedUrl);
+            return created(link);
+        } catch (e) {
+            // The old code checked for an existing slug and then inserted, so two
+            // concurrent requests could both pass the check and the loser surfaced
+            // as a generic 500. Let the UNIQUE constraint decide instead.
+            if (isUniqueConstraintError(e)) {
+                return new Response('Slug already in use', { status: 409 });
+            }
+            console.error('[Create] Error creating link:', e);
+            return new Response('Error creating link', { status: 500 });
         }
     }
 
-    // 6. Save
-    try {
-        const link = await db.createLink(finalSlug, normalizedUrl);
-        return new Response(JSON.stringify(link), {
-            status: 201,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    } catch (e: any) {
-        console.error('[Create] Error creating link:', e);
-        // [SECURITY] Don't leak error details to client
-        return new Response('Error creating link', { status: 500 });
+    // No slug requested: generate one, retrying only on a genuine collision.
+    for (let attempt = 0; attempt < SLUG_GENERATION_ATTEMPTS; attempt++) {
+        try {
+            const link = await db.createLink(generateSlug(), normalizedUrl);
+            return created(link);
+        } catch (e) {
+            if (isUniqueConstraintError(e)) continue;
+            console.error('[Create] Error creating link:', e);
+            return new Response('Error creating link', { status: 500 });
+        }
     }
+
+    console.error(`[Create] Could not find a free slug in ${SLUG_GENERATION_ATTEMPTS} attempts`);
+    return new Response('Could not generate unique slug', { status: 500 });
+}
+
+function created(link: unknown): Response {
+    return new Response(JSON.stringify(link), {
+        status: 201,
+        headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+        },
+    });
+}
+
+function isUniqueConstraintError(e: unknown): boolean {
+    const message = e instanceof Error ? e.message : String(e);
+    return /UNIQUE constraint failed/i.test(message);
 }

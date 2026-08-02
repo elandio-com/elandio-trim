@@ -1,43 +1,47 @@
-// @ts-ignore
-import { IRequest } from 'itty-router';
 import { Env } from '../types';
+import { isAdminTokenConfigured, timingSafeEqual } from '../utils/auth';
 
-export async function login(request: IRequest, env: Env): Promise<Response> {
-    try {
-        // [SECURITY] Validate ADMIN_TOKEN is configured
-        if (!env.ADMIN_TOKEN || env.ADMIN_TOKEN.trim().length === 0) {
-            console.error('[Login] ADMIN_TOKEN not configured');
-            return new Response(JSON.stringify({ error: 'Server configuration error' }), {
-                status: 500,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
-
-        const { token } = await request.json() as { token: string };
-
-        if (!token) {
-            return new Response(JSON.stringify({ error: 'Token required' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
-
-        // [SECURITY] Use consistent error message to prevent token enumeration
-        if (token !== env.ADMIN_TOKEN) {
-            return new Response(JSON.stringify({ error: 'Invalid token' }), {
-                status: 401,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
-
-        return new Response(JSON.stringify({ success: true }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    } catch (e) {
-        return new Response(JSON.stringify({ error: 'Invalid request' }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' }
-        });
+/**
+ * Validates an admin token so the dashboard can show a login error instead of
+ * silently failing on the first API call.
+ *
+ * This establishes no session and sets no cookie: the token itself is the
+ * credential on every subsequent request. The endpoint is therefore a token
+ * oracle by design, and its only real protection is the API rate limit plus a
+ * token long enough to resist guessing — hence the strength guidance in the
+ * README. See the "Security Model" section there.
+ */
+export async function login(request: Request, env: Env): Promise<Response> {
+    if (!isAdminTokenConfigured(env)) {
+        console.error('[Login] ADMIN_TOKEN is not configured');
+        return json({ error: 'Server configuration error' }, 500);
     }
+
+    let token: string;
+    try {
+        ({ token } = (await request.json()) as { token: string });
+    } catch {
+        return json({ error: 'Invalid request' }, 400);
+    }
+
+    if (!token) {
+        return json({ error: 'Token required' }, 400);
+    }
+
+    if (!timingSafeEqual(token, env.ADMIN_TOKEN)) {
+        console.warn('[Login] Failed authentication attempt');
+        return json({ error: 'Invalid token' }, 401);
+    }
+
+    return json({ success: true }, 200);
+}
+
+function json(body: unknown, status: number): Response {
+    return new Response(JSON.stringify(body), {
+        status,
+        headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+        },
+    });
 }

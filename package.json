@@ -1,14 +1,24 @@
 {
-    "name": "minimal-url-shortener",
+    "name": "elandio-trim",
     "version": "1.0.0",
     "description": "A clean, minimal, self-hosted URL shortener on Cloudflare Workers + D1",
+    "license": "Apache-2.0",
+    "author": "Elandio (https://elandio.com)",
+    "homepage": "https://github.com/elandio-com/elandio-trim#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/elandio-com/elandio-trim.git"
+    },
+    "bugs": {
+        "url": "https://github.com/elandio-com/elandio-trim/issues"
+    },
+    "private": true,
     "main": "src/worker/index.ts",
     "scripts": {
         "dev": "wrangler dev",
-        "deploy": "wrangler deploy"
-    },
-    "dependencies": {
-        "itty-router": "^4.0.0"
+        "deploy": "wrangler deploy",
+        "typecheck": "tsc --noEmit",
+        "schema:sql": "node scripts/generate-schema-sql.mjs"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20240405.0",
