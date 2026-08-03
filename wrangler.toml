@@ -19,8 +19,14 @@ run_worker_first = true
 
 # D1 Database Binding
 #
-# `wrangler deploy` will fail until database_id is filled in. Create the database
-# with `wrangler d1 create elandio-trim-db` and paste the id it prints here.
+# database_id is intentionally left as a placeholder. The "Deploy to Cloudflare"
+# button reads this file, provisions the D1 database automatically, and rewrites
+# this id with the real one — so a placeholder is what that flow expects. Do not
+# commit a real database id here, or the button will point deployers at a
+# database that is not theirs.
+#
+# Deploying with the Wrangler CLI instead? Run `wrangler d1 create elandio-trim-db`
+# and paste the id it prints here before `wrangler deploy`.
 [[d1_databases]]
 binding = "DB"
 database_name = "elandio-trim-db"

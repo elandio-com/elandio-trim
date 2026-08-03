@@ -28,9 +28,33 @@ A simple, self-hostable URL shortener built on **Cloudflare Workers**, **D1 Data
 
 ## 🚀 Deploy
 
-Deployment takes about 10 minutes and **does require the terminal once**, to
-create the D1 database and paste its id into `wrangler.toml`. Cloudflare cannot
-provision the database for you from the deploy button alone.
+### Option 1 — One-click (no terminal)
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/elandio-com/elandio-trim)
+
+Cloudflare reads this repo's `wrangler.toml`, **creates the D1 database for you**,
+wires up the binding, and deploys. You don't need to touch a terminal or copy a
+database id anywhere.
+
+**Then set your admin token — this step is required.** The worker deliberately
+refuses to serve anything until it has one:
+
+1. Open the [Cloudflare dashboard](https://dash.cloudflare.com) → **Workers & Pages** → your new `elandio-trim` project.
+2. **Settings** → **Variables and Secrets** → **Add**.
+3. Name it `ADMIN_TOKEN`, paste a long random value, and choose **Secret** (encrypted) rather than plaintext.
+4. **Deploy** to apply it.
+
+Generate the value properly — the login endpoint validates guesses, so a
+memorable password will eventually be guessed:
+
+```bash
+openssl rand -base64 32
+```
+
+Finally, open `https://<your-worker>.workers.dev/setup.html` once to create the
+tables, then log in at `/dashboard.html`.
+
+### Option 2 — Wrangler CLI
 
 ```bash
 git clone https://github.com/elandio-com/elandio-trim.git
@@ -41,21 +65,19 @@ npm install
 npx wrangler d1 create elandio-trim-db
 
 # 2. Set your admin token as an encrypted secret
-openssl rand -base64 32          # copy the output
 npx wrangler secret put ADMIN_TOKEN
 
 # 3. Deploy
 npx wrangler deploy
 ```
 
-Then open `https://<your-worker>.workers.dev/setup.html` once to initialise the
-tables, and log in at `/dashboard.html`.
+Then visit `/setup.html` once, and log in at `/dashboard.html`.
 
 Full walkthrough, including custom domains: **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
 
 > **Never put `ADMIN_TOKEN` in `wrangler.toml`.** That file is committed to git
 > and its values are visible in plain text. Use `wrangler secret put`, or the
-> Cloudflare dashboard with **Encrypt** selected.
+> Cloudflare dashboard with **Secret** selected.
 
 ---
 
