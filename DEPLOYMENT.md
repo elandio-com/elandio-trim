@@ -6,18 +6,31 @@ This guide will walk you through deploying your URL shortener to Cloudflare Work
 
 - Cloudflare account (free tier works!)
 - A domain (optional but recommended)
-- 10-15 minutes
+- ~5 minutes via the deploy button, ~15 via the CLI
 
 ---
 
-> **On one-click deploy:** there isn't one, and there can't be a complete one.
-> The deploy button cannot provision a D1 database and write its id back into
-> `wrangler.toml`, so a button-only deploy would come up with a broken database
-> binding. The steps below are the supported path.
+## Method 1: One-click deploy (easiest)
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/elandio-com/elandio-trim)
+
+Cloudflare reads `wrangler.toml`, **provisions the D1 database automatically**,
+updates the binding with the new database id, and deploys. No terminal required.
+
+Afterwards you still need to:
+
+1. Set `ADMIN_TOKEN` as an encrypted secret (see [Step 6](#step-6-set-admin-token) below — the dashboard route).
+2. Visit `/setup.html` once to create the tables.
+
+That's it. Skip to [Adding a Custom Domain](#adding-a-custom-domain) if you used
+this method.
 
 ---
 
-## Deployment
+## Method 2: Wrangler CLI
+
+Use this if you want the database in a specific account/location, or you're
+developing locally.
 
 ### Step 1: Install Wrangler CLI
 
